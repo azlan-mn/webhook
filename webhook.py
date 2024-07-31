@@ -1,4 +1,6 @@
-import sqlite3
+import sqlite_utils
+import json
+
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -27,9 +29,14 @@ def webhook():
     print('\n'.join(out))
     return '\n'.join(out)
 
-@app.route('/<webhook_id>', methods=['POST'])
-def register(webhook_id):
-    return webhook_id
+#@app.route('register/<webhook_id>', methods=['POST'])
+#def register(webhook_id):
+#    out = []
+#    for 
+#    db = sqlite_utils.Database("sql.db")
+#    db['hooks'].insert
+#    return webhook_id
 
-app.run(host='0.0.0.0', port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
 
