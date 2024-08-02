@@ -17,6 +17,8 @@ def respond(webhook_id):
                 copy_dict_value(copy_key, req_d[key], res_d[key])
     try:
         db = sqlite_utils.Database('sql.db')
+        # save request
+        db['request'].insert({ 'id': webhook_id, 'payload': json.dumps(request.json) }, pk='id', replace=True)
         row = db['hooks'].get(webhook_id)
     except BaseException as e:
         return 'Error\n' + str(e), 500
@@ -24,6 +26,8 @@ def respond(webhook_id):
     tokens = row['extract'].split(',')
     for token in tokens:
         copy_dict_value(token, request.json, response)
+    # save response
+    db['response'].insert({ 'id': webhook_id, 'payload': json.dumps(response) }, pk='id', replace=True)
     return response
 
 @app.post('/register/<webhook_id>')
@@ -45,6 +49,19 @@ def register(webhook_id):
 def echo():
     return request.json
 
+@app.get('/history/<webhook_id>/<history_type>')
+def history(webhook_id, history_type):
+    db = sqlite_utils.Database('sql.db')
+    if history_type == 'request':
+        try:
+            return json.loads(db['request'].get(webhook_id)['payload'])
+        except BaseException as e:
+            return 'Error\n' + str(e), 500
+    try:
+        return json.loads(db['response'].get(webhook_id)['payload'])
+    except BaseException as e:
+        return 'Error\n' + str(e), 500
+
 @app.route('/', methods=['POST', 'GET'])
 def webhook():
     out = [
@@ -60,6 +77,11 @@ def webhook():
         '- Expected json payload:',
         '   - extract: Comma delimited string of JSON attributes to extract from request, and replace in response payload.',
         '   - payload: JSON string that will be sent back in webhook response.',
+        '',
+        '## GET /history/<webhook_id>/request|response - Get the last request or response seen for the endpdoint.',
+        '',
+        '- No payload expected',
+        '',
     ]
     return '\n'.join(out)
 
