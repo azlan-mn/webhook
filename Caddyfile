@@ -1,0 +1,3 @@
+amn.icu {
+    reverse_proxy :5000
+}
