@@ -7,7 +7,24 @@ app = Flask(__name__)
 
 @app.post('/<webhook_id>')
 def respond(webhook_id):
-    return { 'status': 'success' }
+    def copy_dict_value(copy_key, req_d, res_d):
+        if copy_key in req_d and copy_key in res_d:
+            res_d[copy_key] = req_d[copy_key]
+        for key in req_d:
+            if key in res_d \
+                and isinstance(req_d[key], dict) \
+                and isinstance(res_d[key], dict):
+                copy_dict_value(copy_key, req_d[key], res_d[key])
+    try:
+        db = sqlite_utils.Database('sql.db')
+        row = db['hooks'].get(webhook_id)
+    except BaseException as e:
+        return 'Error\n' + str(e), 500
+    response = json.loads(row['payload'])
+    tokens = row['extract'].split(',')
+    for token in tokens:
+        copy_dict_value(token, request.json, response)
+    return response
 
 @app.post('/register/<webhook_id>')
 def register(webhook_id):
@@ -16,15 +33,12 @@ def register(webhook_id):
         if key not in request.json:
             return 'Incorrect input.\nExpected: {extract:str, payload:str}\nReceived: ' + str(request.json), 400
         data[key] = request.json[key]
-    #return json.loads(request.json['payload'])
-
     try:
         db = sqlite_utils.Database('sql.db')
         db['hooks'].insert(data, pk='id', replace=True)
         result = db['hooks'].get(data['id'])
     except BaseException as e:
         return 'Error\n' + str(e), 500
-
     return { 'status': 'success', 'db': result }
 
 @app.route('/', methods=['POST', 'GET'])
@@ -35,7 +49,7 @@ def webhook():
         '',
         '## POST /<webhook_id> - Webhook will respond with preconfigured response.',
         '',
-        '- All payloads accepted.',
+        '- JSON payloads accepted.',
         '',
         '## POST /register/<webhook_id> - Configure a response to any request send to webhook endpoint.',
         '',
