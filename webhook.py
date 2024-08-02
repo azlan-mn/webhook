@@ -41,6 +41,10 @@ def register(webhook_id):
         return 'Error\n' + str(e), 500
     return { 'status': 'success', 'db': result }
 
+@app.post('/echo')
+def echo():
+    return request.json
+
 @app.route('/', methods=['POST', 'GET'])
 def webhook():
     out = [
