@@ -47,6 +47,7 @@ def register(webhook_id):
 
 @app.post('/echo')
 def echo():
+    db = sqlite_utils.Database('sql.db')
     db['request'].insert({ 'id': webhook_id, 'payload': json.dumps(request.json) }, pk='id', replace=True)
     return request.json
 
