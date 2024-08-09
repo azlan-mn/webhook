@@ -36,7 +36,10 @@ def register(webhook_id):
     for key in ['payload', 'extract']:
         if key not in request.json:
             return 'Incorrect input.\nExpected: {extract:str, payload:str}\nReceived: ' + str(request.json), 400
-        data[key] = request.json[key]
+        user_data = request.json[key]
+        if key == 'payload':
+            user_data = json.dumps(user_data)
+        data[key] = user_data
     try:
         db = sqlite_utils.Database('sql.db')
         db['hooks'].insert(data, pk='id', replace=True)
@@ -76,7 +79,7 @@ def webhook():
         '',
         '- Expected json payload:',
         '   - extract: Comma delimited string of JSON attributes to extract from request, and replace in response payload.',
-        '   - payload: JSON string that will be sent back in webhook response.',
+        '   - payload: JSON that will be sent back in webhook response.',
         '',
         '## GET /history/<webhook_id>/request|response - Get the last request or response seen for the endpdoint.',
         '',
