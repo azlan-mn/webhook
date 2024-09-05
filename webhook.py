@@ -44,8 +44,12 @@ def register(webhook_id):
         db = sqlite_utils.Database('sql.db')
         db['hooks'].insert(data, pk='id', replace=True)
         result = db['hooks'].get(data['id'])
+        # delete existing history
+        db['response'].delete(webhook_id)
+        db['request'].delete(webhook_id)
     except BaseException as e:
         return 'Error\n' + str(e), 500
+    result['payload'] = json.loads(result['payload'])
     return { 'status': 'success', 'db': result }
 
 @app.post('/echo')
