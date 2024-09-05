@@ -44,11 +44,14 @@ def register(webhook_id):
         db = sqlite_utils.Database('sql.db')
         db['hooks'].insert(data, pk='id', replace=True)
         result = db['hooks'].get(data['id'])
-        # delete existing history
-        db['response'].delete(webhook_id)
-        db['request'].delete(webhook_id)
     except BaseException as e:
         return 'Error\n' + str(e), 500
+    try:
+        # delete existing history
+        db['request'].delete(webhook_id)
+        db['response'].delete(webhook_id)
+    except:
+        pass
     result['payload'] = json.loads(result['payload'])
     return { 'status': 'success', 'db': result }
 
@@ -63,11 +66,11 @@ def history(webhook_id, history_type):
         try:
             return json.loads(db['request'].get(webhook_id)['payload'])
         except BaseException as e:
-            return 'Error\n' + str(e), 500
+            return 'Error. No history found.\n' + str(e), 500
     try:
         return json.loads(db['response'].get(webhook_id)['payload'])
     except BaseException as e:
-        return 'Error\n' + str(e), 500
+        return 'Error. No history found.\n' + str(e), 500
 
 @app.route('/', methods=['POST', 'GET'])
 def webhook():
